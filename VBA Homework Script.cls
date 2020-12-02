@@ -1,0 +1,190 @@
+VERSION 1.0 CLASS
+BEGIN
+  MultiUse = -1  'True
+END
+Attribute VB_Name = "ThisWorkbook"
+Attribute VB_GlobalNameSpace = False
+Attribute VB_Creatable = False
+Attribute VB_PredeclaredId = True
+Attribute VB_Exposed = True
+ 
+Sub stockTicker()
+ 
+Dim ws As Worksheet
+
+For Each ws In ActiveWorkbook.Worksheets
+
+Dim ticker As String
+ 
+'Declare trading Volume variable
+Dim Volume As Double
+    Volume = 0
+    
+'Declare looping variable
+Dim SumRow As Integer
+    SumRow = 2
+    
+
+Dim lRow As Long
+Dim lCol As Long
+Dim wsRange As Range
+Dim openPrice As Double
+Dim closePrice As Double
+Dim tickerStart As Double
+Dim yearlyChange As Double
+Dim percentChange As Double
+Dim maxVolume As Double
+
+lRow = 0
+lCol = 0
+openPrice = 0
+closePrice = 0
+tickerStart = 0
+
+'Use this to figure out how many rows are on a sheet
+lRow = Cells(Rows.Count, 1).End(xlUp).Row
+
+'This figures out how many columns (not necessary, but useful reference)
+lCol = Cells(1, Columns.Count).End(xlToLeft).Column
+'end code to find last row of sheet
+    
+'Print headers for results columns.  The last two are not part of the homework but are for sanity checks
+ 
+ws.Range("J1").FormulaR1C1 = "Ticker"
+ws.Range("K1").FormulaR1C1 = "Yearly Change"
+ws.Range("L1").FormulaR1C1 = "Percent Change"
+ws.Range("M1").FormulaR1C1 = "Volume"
+'ws.Range("O1").FormulaR1C1 = "Open Price"
+'ws.Range("P1").FormulaR1C1 = "Closing Price"
+ws.Range("J1:M1").Font.Bold = True
+
+'intialize tickerstart at 2 since the numbers begin on row 2
+tickerStart = 2
+   
+' begin looping through the rows from row to the last row (calculated above)
+    For rowcounter = 2 To lRow
+'If the adjacent ticker symbol sells don't match, we've come to the end of this loop
+'and we calculate our values
+        If ws.Cells(rowcounter + 1, 1).Value <> ws.Cells(rowcounter, 1).Value Then
+        'stock ticker NAME
+        ticker = ws.Cells(rowcounter, 1).Value
+'opening price on first day of trading for that stock
+        openPrice = ws.Cells((tickerStart), 3)
+'closing price for the last day of trading for that stock
+        closePrice = ws.Cells(rowcounter, 6).Value
+'Total volume for that sock
+        Volume = Volume + ws.Cells(rowcounter, 7).Value
+'Yearly change for the stock
+        yearlyChange = closePrice - openPrice
+
+'check for divide by zero
+          If openPrice = 0 Then
+          percentChange = 0
+          Else
+         percentChange = (closePrice - openPrice) / openPrice
+         End If
+        
+        If yearlyChange < 0 Then
+        ws.Range("K" & SumRow, "L" & SumRow).Interior.ColorIndex = 3
+        Else
+        ws.Range("K" & SumRow, "L" & SumRow).Interior.ColorIndex = 4
+        End If
+    
+'We write the values calculated above:
+        ws.Range("J" & SumRow).Value = ticker
+        ws.Range("K" & SumRow).Value = yearlyChange
+        ws.Range("K" & SumRow).NumberFormat = "$#,##0.00"
+        ws.Range("L" & SumRow).Value = percentChange
+        ws.Range("L" & SumRow).NumberFormat = "0.00%"
+        ws.Range("m" & SumRow).Value = Volume
+        ws.Range("M" & SumRow).NumberFormat = "#,##0"
+       ' ws.Range("O" & SumRow).Value = openPrice
+       ' ws.Range("P" & SumRow).Value = closePrice
+
+'Increment and reset our values as appropriate
+        SumRow = SumRow + 1
+        Volume = 0
+        tickerStart = rowcounter + 1
+    Else
+    'running total of volume
+      If maxVolume < Cells(rowcounter, 7).Value Then maxVolume = Cells(rowcounter, 7).Value
+        Volume = Volume + Cells(rowcounter, 7).Value
+       ' Debug.Print "running volume    "; Volume
+     End If
+ 
+Next rowcounter
+
+
+
+
+
+Dim myVal As Double
+Dim x As Integer
+Dim lRowResults As Integer
+Dim tickerResults As String
+
+Dim VolumeRange As Range
+Dim mx As Double
+Dim rw As Integer
+Dim VolumeTicker  As String
+
+Dim PercentDecrease As Range
+Dim PercentMin As Double
+Dim PercentMinRow As Integer
+Dim PercentMinTicker As String
+
+Dim PercentIncrease As Range
+Dim PercentMax As Double
+Dim PercentMaxRow As Integer
+Dim PercentMaxTicker As String
+
+lRow = 0
+mx = 0
+rw = 0
+VolumeTicker = ""
+
+
+lRowResults = ws.Cells(Rows.Count, 13).End(xlUp).Row
+
+
+Set VolumeRange = ws.Range("m2", "m" & lRowResults)
+mx = WorksheetFunction.Max(VolumeRange)
+rw = WorksheetFunction.Match(mx, VolumeRange, 0) + VolumeRange.Row - 1
+VolumeTicker = ws.Cells(rw, 10).Value
+
+Set PercentDecrease = ws.Range("L2", "L" & lRowResults)
+PercentMin = WorksheetFunction.Min(PercentDecrease)
+PercentMinRow = WorksheetFunction.Match(PercentMin, PercentDecrease, 0) + PercentDecrease.Row - 1
+PercentMinTicker = ws.Cells(PercentMinRow, 10).Value
+
+Set PercentIncrease = ws.Range("L2", "L" & lRowResults)
+PercentMax = WorksheetFunction.Max(PercentIncrease)
+PercentMaxRow = WorksheetFunction.Match(PercentMax, PercentIncrease, 0) + PercentIncrease.Row - 1
+PercentMaxTicker = ws.Cells(PercentMaxRow, 10).Value
+
+
+'MsgBox ticker
+
+ws.Range("O2").Value = "Greatest % Increase:"
+ws.Range("O3").Value = "Greatest % Decrease:"
+ws.Range("O4").Value = "Greatest total Volume:"
+ws.Range("O2:O4").Font.Bold = True
+
+ws.Range("P2").Value = PercentMaxTicker
+ws.Range("Q2").Value = PercentMax
+ws.Range("Q2").NumberFormat = "0.00%"
+
+ws.Range("P3").Value = PercentMinTicker
+ws.Range("Q3").Value = PercentMin
+ws.Range("Q3").NumberFormat = "0.00%"
+
+ws.Range("P4").Value = VolumeTicker
+ws.Range("Q4").Value = mx
+ws.Range("Q4").NumberFormat = "#,##0"
+Beep
+   Next ws
+
+End Sub
+
+
+
